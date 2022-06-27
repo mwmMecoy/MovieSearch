@@ -1,10 +1,11 @@
 const express = require('express')
 const app = express()
 const cors = require('cors')
-const {MongoClient, ObjectId} = require('mongodb')
+const {MongoClient, ObjectId } = require('mongodb')
 const { response } = require('express')
+const { request } = require('http')
 require('dotenv').config()
-const PORT = 8000;
+const PORT = 8000
 
 let db,
     dbConnectionStr = process.env.DB_STRING,
@@ -12,28 +13,27 @@ let db,
     collection
 
 MongoClient.connect(dbConnectionStr)
-    .then(client =>  {
-        console.log("Connection to database successful")
+    .then(client => {
+        console.log(`Connected to database`)
         db = client.db(dbName)
         collection = db.collection('movies')
     })
-
 //Middleware
-app.use(express.urlencoded({extended: true}))
+app.use(express.urlencoded({extended : true}))
 app.use(express.json())
 app.use(cors())
 
 //this is pulling an array of possibilities for the search bar
-app.get("/search", async(req, res) =>{
+app.get("/search", async (request,response) => {
     try {
         let result = await collection.aggregate([
             {
-                "$Search" : {
+                "$search" : {
                     "autocomplete" : {
-                        "query" : `${request.query.query}`,
+                        "query": `${request.query.query}`,
                         "path": "title",
                         "fuzzy": {
-                            "maxEdits": 2,
+                            "maxEdits":2,
                             "prefixLength": 3
                         }
                     }
@@ -47,7 +47,7 @@ app.get("/search", async(req, res) =>{
 })
 
 //This get is pulling the information for the selected movie
-app.get("/get/:id", async(req, res) => {
+app.get("/get/:id", async (request, response) => {
     try {
         let result = await collection.findOne({
             "_id" : ObjectId(request.params.id)
@@ -59,5 +59,5 @@ app.get("/get/:id", async(req, res) => {
 })
 
 app.listen(process.env.PORT || PORT, () => {
-    console.log("Server is running")
+    console.log(`Server is running.`)
 })
